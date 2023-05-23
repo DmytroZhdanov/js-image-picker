@@ -20,38 +20,36 @@ const perPage = 40;
 
 refs.form.addEventListener('submit', onSearchFormSbmt);
 
-function onSearchFormSbmt(evt) {
+async function onSearchFormSbmt(evt) {
   evt.preventDefault();
   window.scroll({ top: 0 });
+
   const { searchQuery } = evt.currentTarget.elements;
   queryToFetch = getQuery(searchQuery.value);
   currentPage = 1;
 
-  fetchImages(queryToFetch, currentPage)
-    .then(response => {
-      const { hits, totalHits } = response.data;
-      totalImgs = totalHits;
+  const response = await fetchImages(queryToFetch, currentPage);
+  const { hits, totalHits } = response.data;
+  totalImgs = totalHits;
 
-      if (!hits.length) {
-        Notify.failure(
-          'Sorry, there are no images matching your search query. Please try again.'
-        );
-        refs.gallery.innerHTML = '';
-        return
-      }
+  if (!hits.length) {
+    Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.'
+    );
+    refs.gallery.innerHTML = '';
+    observer.unobserve(refs.target);
+    return;
+  }
 
-      Notify.success(`Hooray! We found ${totalHits} images.`);
-      refs.gallery.innerHTML = createMarkup(hits).join('');
-      simpleLightboxGallery.refresh();
+  Notify.success(`Hooray! We found ${totalHits} images.`);
+  refs.gallery.innerHTML = createMarkup(hits).join('');
+  simpleLightboxGallery.refresh();
 
-      if (currentPage * perPage >= totalHits) {
-        return;
-      }
-      observer.observe(refs.target);
-    })
-    .catch(error => {
-      Notify.failure('Error: ', error.message);
-    });
+  if (currentPage * perPage >= totalHits) {
+    return;
+  }
+
+  observer.observe(refs.target);
 }
 
 async function fetchImages(q, page) {
@@ -109,7 +107,7 @@ function createMarkup(pictures) {
   return markup;
 }
 
-function observerCallback(evt) {
+async function observerCallback(evt) {
   if (!evt[0].isIntersecting) {
     return;
   }
@@ -121,16 +119,8 @@ function observerCallback(evt) {
   }
 
   currentPage += 1;
-
-  fetchImages(queryToFetch, currentPage)
-    .then(response => {
-      const { hits, totalHits } = response.data;
-      refs.gallery.insertAdjacentHTML('beforeend', createMarkup(hits).join(''));
-      simpleLightboxGallery.refresh();
-
-      
-    })
-    .catch(error => {
-      Notify.failure('Error: ', error.message);
-    });
+  const response = await fetchImages(queryToFetch, currentPage);
+  const { hits, totalHits } = response.data;
+  refs.gallery.insertAdjacentHTML('beforeend', createMarkup(hits).join(''));
+  simpleLightboxGallery.refresh();
 }
