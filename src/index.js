@@ -22,6 +22,7 @@ refs.form.addEventListener('submit', onSearchFormSbmt);
 
 async function onSearchFormSbmt(evt) {
   evt.preventDefault();
+  refs.input.blur();
   window.scroll({ top: 0 });
 
   const { searchQuery } = evt.currentTarget.elements;
@@ -42,7 +43,7 @@ async function onSearchFormSbmt(evt) {
   }
 
   Notify.success(`Hooray! We found ${totalHits} images.`);
-  refs.gallery.innerHTML = createMarkup(hits).join('');
+  refs.gallery.innerHTML = createMarkup(hits);
   simpleLightboxGallery.refresh();
 
   if (currentPage * perPage >= totalHits) {
@@ -104,7 +105,7 @@ function createMarkup(pictures) {
     }
   );
 
-  return markup;
+  return markup.join('');
 }
 
 async function observerCallback(evt) {
@@ -120,7 +121,7 @@ async function observerCallback(evt) {
 
   currentPage += 1;
   const response = await fetchImages(queryToFetch, currentPage);
-  const { hits, totalHits } = response.data;
-  refs.gallery.insertAdjacentHTML('beforeend', createMarkup(hits).join(''));
+  const { hits } = response.data;
+  refs.gallery.insertAdjacentHTML('beforeend', createMarkup(hits));
   simpleLightboxGallery.refresh();
 }
