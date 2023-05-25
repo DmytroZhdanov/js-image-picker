@@ -1,12 +1,16 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { refs } from './js/refs';
-import axios from 'axios';
+import { fetchImages } from './js/fetchImages';
+import { getQuery } from './js/getQuery';
+import { createMarkup } from './js/createMarkup';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const URL = 'https://pixabay.com/api/';
-const API_KEY = '36673095-e5e2632949512909003f8c0e7';
-const simpleLightboxGallery = new SimpleLightbox('.gallery a');
+const galleryOptions = {
+  captionsData: 'alt',
+  captionDelay: 250,
+};
+const simpleLightboxGallery = new SimpleLightbox('.gallery a', galleryOptions);
 const observerOptions = {
   root: null,
   rootMargin: '450px',
@@ -26,10 +30,15 @@ async function onSearchFormSbmt(evt) {
   window.scroll({ top: 0 });
 
   const { searchQuery } = evt.currentTarget.elements;
+
+  if (!searchQuery.value.trim()) {
+    return Notify.failure('Search query is empty. Please try again.');
+  }
+
   queryToFetch = getQuery(searchQuery.value);
   currentPage = 1;
 
-  const response = await fetchImages(queryToFetch, currentPage);
+  const response = await fetchImages(queryToFetch, currentPage, perPage);
   const { hits, totalHits } = response.data;
   totalImgs = totalHits;
 
@@ -53,61 +62,6 @@ async function onSearchFormSbmt(evt) {
   observer.observe(refs.target);
 }
 
-async function fetchImages(q, page) {
-  const searchParams = new URLSearchParams({
-    key: API_KEY,
-    q,
-    image_type: 'photo',
-    orientation: 'horizontal',
-    safesearch: true,
-    page,
-    per_page: perPage,
-  });
-
-  const response = await axios.get(`${URL}?${searchParams}`);
-  return response;
-}
-
-function getQuery(string) {
-  return string.trim().toLowerCase().split(' ').join('+');
-}
-
-function createMarkup(pictures) {
-  const markup = pictures.map(
-    ({
-      webformatURL,
-      largeImageURL,
-      tags,
-      likes,
-      views,
-      comments,
-      downloads,
-    }) => {
-      return `<a href="${largeImageURL}">
-        <div class="photo-card">
-          <img src="${webformatURL}" alt="${tags}" width="350px" loading="lazy" />
-          <div class="info">
-            <p class="info-item">
-              <b>Likes: </b>${likes}
-            </p>
-            <p class="info-item">
-              <b>Views: </b>${views}
-            </p>
-            <p class="info-item">
-              <b>Comments: </b>${comments}
-            </p>
-            <p class="info-item">
-              <b>Downloads: </b>${downloads}
-            </p>
-          </div>
-        </div>
-      </a>`;
-    }
-  );
-
-  return markup.join('');
-}
-
 async function observerCallback(evt) {
   if (!evt[0].isIntersecting) {
     return;
@@ -120,7 +74,7 @@ async function observerCallback(evt) {
   }
 
   currentPage += 1;
-  const response = await fetchImages(queryToFetch, currentPage);
+  const response = await fetchImages(queryToFetch, currentPage, perPage);
   const { hits } = response.data;
   refs.gallery.insertAdjacentHTML('beforeend', createMarkup(hits));
   simpleLightboxGallery.refresh();
