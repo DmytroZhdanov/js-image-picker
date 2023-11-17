@@ -1,11 +1,11 @@
 {
-  "name": "parcel-project-template",
+  "name": "js-image-picker",
   "version": "2.0.0",
   "description": "",
-  "homepage": "https://DmytroZhdanov.github.io/goit-js-hw-11",
+  "homepage": "https://DmytroZhdanov.github.io/js-image-picker",
   "scripts": {
     "start": "parcel src/*.html",
-    "build": "parcel build src/*.html --public-url /goit-js-hw-11/"
+    "build": "parcel build src/*.html --public-url /js-image-picker/"
   },
   "repository": {
     "type": "git",
